@@ -2,6 +2,13 @@
 # pip install packaging
 # Documentação : https://customtkinter.tomschimansky.com/
 
+#### Comando para tornar o programa executável ------------------------
+# pyinstaller -F -w  --add-data "ClasseToplevelResultado.py;."
+# --add-data "ClasseToplevelSortear.py;."
+# --add-data "Funcoes.py;."  Main.py
+# Colocar a pasta Fontes na mesma pasta do executável
+
+
 # É possivel obter qualquer resultado de qualquer modalidade de loteria na forma de um JSON,
 # acessando uma simples URL.
 # Basta acessar diretamente as segintes URLs e será obtido o respectivo resultado do concurso mais recente:
@@ -24,91 +31,215 @@
 # https://servicebus2.caixa.gov.br/portaldeloterias/api/quina/1234
 
 import customtkinter as ctk
-import os
-from PIL import Image
-import random
+from loteria_caixa import (MegaSena, LotoFacil, DiadeSorte)
+from Funcoes import *
+from ClasseToplevelSortear import *
+from ClasseToplevelResultado import *
 
 
-WIDTH = 600
-HEIGHT = 400
-MES = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
-       'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO']
-caminho = os.getcwd()
+class Frame_Sortear(ctk.CTkFrame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
 
-### Janela para mostrar o Resultado do Sorteio
-class ToplevelWindow(ctk.CTkToplevel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        self.variable = ctk.StringVar()
+        self.QtdNumeros = int(opcoes_LotoFacil[0])
+        self.variable.set(opcoes_LotoFacil[0])
+        self.Tipo= 1    # LotoFacil
+        self.ListaResultado = []
 
-        self.jogo = app.radio_var.get()
-
-        self.title('Boa sorte !')
-        # Calcula centro da Tela
-        self.x = int((self.winfo_screenwidth() / 2) - (WIDTH / 2))
-        self.y = int((self.winfo_screenheight() / 2) - (HEIGHT / 2))
-        self.geometry(f"860x600+{self.x}+{self.y}")
-
-        if self.jogo == 1:
-            texto = 'LOTO FÁCIL'
-        if self.jogo == 2:
-            texto = 'MEGA SENA'
-        if self.jogo == 3:
-            texto = 'DIA DE SORTE'
-        self.label = ctk.CTkLabel(self,
-                                  text= texto,
-                                  fg_color="transparent",
-                                  padx=0,
-                                  pady=50,
-                                  font=('Arial', 30),
-                                  )
-        self.label.pack(padx=20, pady=20)
-        self.lista = self.gerasorteio(self.jogo)
-        self.DesenhaBola(self.lista)
-
-        if self.jogo == 3:
-            n = random.randint(0, 11)
+        try:
+            self.ResultLotoFacil = LotoFacil()
+            self.ResultMegasena = MegaSena()
+            self.ResultDiadeSorte = DiadeSorte()
+            self.Atual = str(self.ResultLotoFacil.numero())
+            self.NoConcurso = ctk.StringVar(value="2000")
+            self.NoConcurso.set(self.Atual)
             self.label = ctk.CTkLabel(self,
-                                      text='MÊS SORTEADO :  ' + MES[n],
+                                      text="",
                                       fg_color="transparent",
-                                      padx=0,
-                                      pady=50,
                                       font=('Arial', 30),
-                                      ).place(x= 250, y= 500)
-    # Gera numeros em função do tipo de jogo escolhido
-    def gerasorteio(self,jogo):
-        randomlist = []
-        if jogo == 1:
-            max_jogos = 25
-            total_jogos = 15
-        if jogo == 2:
-            max_jogos = 60
-            total_jogos = 6
-        if jogo == 3:
-            max_jogos = 31
-            total_jogos = 7
-        while len(randomlist) < total_jogos:
-            n = random.randint(1, max_jogos)
-            if n not in randomlist:
-                randomlist.append(n)
-        # print(randomlist)
-        randomlist.sort(reverse=False)
-        return randomlist.copy()
+                                      ).place(relx=0.23, rely=0.90)
+        except:
+            self.label = ctk.CTkLabel(self,
+                                      text="  SEM ACESSO ! ",
+                                      fg_color="orange",
+                                      font=('Arial', 30),
+                                      ).place(relx=0.23, rely=0.90)
 
-    # Desenha circunferências com o número sorteado no centro
-    def DesenhaBola(self,lista):
-        x = 80
-        y = 120
-        xmax = 6 * 120
-        for idx, num in enumerate(lista):
-            figura = fr"{caminho}/Fotos/{str(lista[idx])}.png"
-            self.image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), figura )
-            self.image = ctk.CTkImage(light_image= Image.open(self.image_path), size=(100,100))
-            self.image_label = ctk.CTkLabel(self, image = self.image, text= '')
-            self.image_label.place(x= x, y= y)
-            x += 120
-            if x > xmax:
-                x = 80
-                y += 120
+        self.Valor = dic_dados["1_15"][0].ljust(20)
+        self.Prob = dic_dados["1_15"][1].ljust(20)
+
+
+        self.label = ctk.CTkLabel(self,
+                     text="NÚMEROS DA SORTE",
+                     fg_color="transparent",
+                     font= ('Arial',30),
+                     ).place(relx=0.23, rely=0.0)
+
+        self.radio_var = ctk.IntVar(value=1)
+        self.radiobutton_1 = ctk.CTkRadioButton(self,
+                                                text="Loto Fácil",
+                                                font=('Arial', 18),
+                                                command=self.radiobutton_event,
+                                                variable=self.radio_var, value=1
+                                                ).place(relx=0.1, rely=0.2)
+        self.radiobutton_2 = ctk.CTkRadioButton(self,
+                                                text="Megasena",
+                                                font=('Arial', 18),
+                                                command=self.radiobutton_event,
+                                                variable=self.radio_var, value=2
+                                                ).place(relx=0.38, rely=0.2)
+        self.radiobutton_3 = ctk.CTkRadioButton(self,
+                                                text="Dia da sorte",
+                                                font=('Arial', 18),
+                                                command=self.radiobutton_event,
+                                                variable=self.radio_var, value=3
+                                                ).place(relx=0.65, rely=0.2)
+
+        self.buttonSortear = ctk.CTkButton(self,
+                                           text="Sortear",
+                                           corner_radius=10,
+                                           font=('Arial', 18),
+                                           width=200,
+                                           height=50,
+                                           command=self.open_toplevelSortear
+                                           ).place(relx=0.3, rely=0.5, anchor=ctk.CENTER)
+
+        self.x_value = 0.55
+        self.label1 = ctk.CTkLabel(self,
+                                   text="Quantidade de jogos"
+                                   ).place(relx=self.x_value, rely=0.4)
+
+        self.combo = ctk.CTkComboBox(self,
+                                     variable=self.variable,
+                                     values= opcoes, # PegaNoJogos(self.Tipo),
+                                     fg_color=cor,
+                                     command=self.select_callback
+                                     ).place(relx=self.x_value, rely=0.49)
+
+        self.buttonResultado = ctk.CTkButton(self,
+                                             text="Resultado",
+                                             corner_radius=10,
+                                             font=('Arial', 18),
+                                             width=200,
+                                             height=50,
+                                             command=self.open_toplevelResultado
+                                             ).place(relx=0.3, rely=0.80, anchor=ctk.CENTER)
+
+        self.label2 = ctk.CTkLabel(self,
+                                   text="Nº do Concurso"
+                                   ).place(relx=self.x_value, rely=0.7)
+
+        self.label3 = ctk.CTkLabel(self,
+                                   text=self.Valor
+                                   ).place(relx=self.x_value + 0.27, rely=0.44)
+        self.label4 = ctk.CTkLabel(self,
+                                   text=self.Prob
+                                   ).place(relx=self.x_value + 0.27, rely=0.51)
+
+        self.NoJogo = ctk.CTkEntry(self,
+                                   fg_color=cor,
+                                   textvariable=self.NoConcurso
+                                   ).place(relx=self.x_value, rely=0.79)
+
+
+    # ########## Combo Número Jogos selecionado
+    def select_callback(self, choice):
+        self.QtdNumeros = choice
+        self.chave = str(self.Tipo) + '_' + str(self.QtdNumeros)
+
+        self.Valor = dic_dados[self.chave][0].ljust(20)
+        self.Prob = dic_dados[self.chave][1].ljust(20)
+        self.label3 = ctk.CTkLabel(self,
+                                   text=self.Valor
+                                   ).place(relx=self.x_value + 0.27, rely=0.44)
+        self.label4 = ctk.CTkLabel(self,
+                                   text=self.Prob
+                                   ).place(relx=self.x_value + 0.27, rely=0.51)
+
+
+    def radiobutton_event(self):
+        # print("radiobutton toggled, current value:", self.radio_var.get() )
+        jogo = self.radio_var.get()
+        opcoes = PegaNoJogos(jogo)  # Busca o quantidade de numeros a jogar para o tipo de jogo escolhido
+        self.variable.set(opcoes[0])
+        self.QtdNumeros = int(opcoes[0])
+        self.Tipo = jogo
+        if self.Tipo == 1:
+            self.Atual = str(self.ResultLotoFacil.numero())
+        elif self.Tipo == 2:
+            self.Atual = str(self.ResultMegasena.numero())
+        else:
+            self.Atual = str(self.ResultDiadeSorte.numero())
+
+        self.NoConcurso.set(self.Atual)
+        self.chave = str(self.Tipo) + '_' + str(self.QtdNumeros)  # Valor da Aposta
+        self.Valor = dic_dados[self.chave][0].ljust(20)
+        self.Prob = dic_dados[self.chave][1].ljust(20)
+        #print('Chave = ',self.chave,'  Valor = ', self.Valor )
+
+        self.combo = ctk.CTkComboBox(self,
+                                     #variable=self.variable,
+                                     values=opcoes,
+                                     fg_color=cor,
+                                     command=self.select_callback
+                                     ).place(relx=self.x_value, rely=0.49)
+        self.label3 = ctk.CTkLabel(self,
+                                   text=self.Valor
+                                   ).place(relx=self.x_value + 0.27, rely=0.44)
+        self.label4 = ctk.CTkLabel(self,
+                                   text=self.Prob
+                                   ).place(relx=self.x_value + 0.27, rely=0.51)
+
+    def BuscaResultado(self):
+        #self.Resultado = {}
+        if self.Tipo == 1:
+            self.concurso = LotoFacil(self.NoConcurso.get())
+        elif self.Tipo == 2:
+            self.concurso = MegaSena(self.NoConcurso.get())
+        else:
+            self.concurso = DiadeSorte(self.NoConcurso.get())
+
+        #print(f'Resultado: {self.Resultado["listaDezenas"]}  Tipo = {self.Tipo}')
+        return self.concurso.todosDados()
+
+    ### Cria tela para mostrar os números sorteados
+    def open_toplevelSortear(self):
+        jogo = self.radio_var.get()
+        # print('Numero jogos = '+ QtdJogos)
+        self.toplevel_window = None
+        if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
+            self.toplevel_window = ToplevelWindowSortear(self.QtdNumeros, self.Tipo)  # create window if its None or destroyed
+            self.toplevel_window.focus()  # if window exists focus it
+        else:
+            self.toplevel_window.focus()  # if window exists focus it
+
+    ### Cria tela para mostrar os números sorteados
+    def open_toplevelResultado(self):
+        try:
+
+            self.ResultadoTotal = self.BuscaResultado()
+
+
+            self.toplevel_window2 = None
+            if self.toplevel_window2 is None or not self.toplevel_window2.winfo_exists():
+                self.toplevel_window2 = ToplevelWindowResultado(self.ResultadoTotal)  # create window if its None or destroyed
+                self.toplevel_window2.focus()  # if window exists focus it
+            else:
+                self.toplevel_window2.focus()  # if window exists focus it
+
+            # self.label = ctk.CTkLabel(self,
+            #                           text="",
+            #                           fg_color="transparent",
+            #                           font=('Arial', 30),
+            #                           ).place(relx=0.23, rely=0.90)
+        except:
+            self.label = ctk.CTkLabel(self,
+                                      text="  ACESSO INVÁLIDO ! ",
+                                      fg_color="orange",
+                                      font=('Arial', 30),
+                                      ).place(relx=0.23, rely=0.90)
+
 
 
 ### Tela de Apresentação
@@ -122,65 +253,14 @@ class App(ctk.CTk):
         self.geometry(f"{WIDTH}x{HEIGHT}+{self.x}+{self.y}")
 
         ctk.set_appearance_mode('dark')
-        self.title('Sorteio da sorte.... ' + caminho)
-        self.label = ctk.CTkLabel(self,
-                     text="NÚMEROS DA SORTE",
-                     fg_color="transparent",
-                     padx= 0,
-                     pady= 50,
-                     font= ('Arial',30),
-                     )
-        self.label.pack()
+        self.title('Sorteio da sorte')
 
-        self.radio_var = ctk.IntVar(value=1)
-        self.radiobutton_1 = ctk.CTkRadioButton(self,
-                                                text="Loto Fácil",
-                                                font=('Arial', 18),
-                                                command=self.radiobutton_event,
-                                                        variable= self.radio_var, value=1)
-        self.radiobutton_2 = ctk.CTkRadioButton(self,
-                                                text="Megasena",
-                                                font=('Arial', 18),
-                                                command=self.radiobutton_event,
-                                                        variable= self.radio_var, value=2)
-        self.radiobutton_3 = ctk.CTkRadioButton(self,
-                                                text="Dia da sorte",
-                                                font=('Arial', 18),
-                                                command=self.radiobutton_event,
-                                                variable=self.radio_var, value=3)
-        x = 120
-        self.radiobutton_1.place(x= x, y= 100)
-        self.radiobutton_2.place(x= x + 120, y= 100)
-        self.radiobutton_3.place(x= x + 240, y= 100)
+        self.Frame = Frame_Sortear(master=self,
+                                   width=550,
+                                   height=310,
+                                   fg_color=None
+                                   ).pack(padx=10, pady=40)
 
-        button = ctk.CTkButton(self,
-                               text="Sortear",
-                               corner_radius=10,
-                               font=('Arial', 18),
-                               width=200,
-                               height=50,
-                               command = self.open_toplevel).place(x=200, y=150)
-
-        self.resizable(False,False)
-        self.toplevel_window = None
-
-    ### OnClick RadioButton
-    def radiobutton_event(self):
-        # print("radiobutton toggled, current value:", self.radio_var.get() )
-        jogo = self.radio_var.get()
-        # print('Jogo escolhido : ' + str(jogo))
-
-
-    ### Cria tela para mostrar os números sorteados
-    def open_toplevel(self):
-        #jogo = self.radio_var.get()
-
-        if self.toplevel_window is None or not self.toplevel_window.winfo_exists():
-            self.toplevel_window = ToplevelWindow(self)  # create window if its None or destroyed
-
-            self.toplevel_window.focus()  # if window exists focus it
-        else:
-            self.toplevel_window.focus()  # if window exists focus it
 
 app = App()
 app.mainloop()

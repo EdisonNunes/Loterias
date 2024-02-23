@@ -56,6 +56,17 @@ def PegaNoJogos(tipo):
        # print(f'Qtd numeros a jogar: {lista[0]}  Tipo = {tipo}')
        return lista
 
+def FormataValor(Valor):
+    try:
+        fat = float(Valor)
+        fat = f'{fat:,.2f}'
+        fat = fat.replace('.', '_').replace(',', '.').replace('_', ',')
+        fat = 'R$ ' + fat
+        return f'Estimado : {fat:<18}     ' # Alinhamento a esquerda
+    except:
+        return 'Não determinado                             '
+
+
 # {"Chave":"1_15","Preço":"R$ 3,00","Probabilidade":"1 em 3.268.760"}
 # {"Chave":"1_16","Preço":"R$ 48,00","Probabilidade":"1 em 204.298"}
 # {"Chave":"1_17","Preço":"R$ 408,00","Probabilidade":"1 em 24.035"}

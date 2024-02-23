@@ -2,6 +2,13 @@
 # pip install packaging
 # Documentação : https://customtkinter.tomschimansky.com/
 
+#### Comando para tornar o programa executável ------------------------
+# pyinstaller -F -w  --add-data "ClasseToplevelResultado.py;."
+# --add-data "ClasseToplevelSortear.py;."
+# --add-data "Funcoes.py;."  Main.py
+# Colocar a pasta Fontes na mesma pasta do executável
+
+
 # É possivel obter qualquer resultado de qualquer modalidade de loteria na forma de um JSON,
 # acessando uma simples URL.
 # Basta acessar diretamente as segintes URLs e será obtido o respectivo resultado do concurso mais recente:
@@ -47,6 +54,8 @@ class Frame_Sortear(ctk.CTkFrame):
             self.Atual = str(self.ResultLotoFacil.numero())
             self.NoConcurso = ctk.StringVar(value="2000")
             self.NoConcurso.set(self.Atual)
+            #self.Estimado1 = str(self.ResultLotoFacil.valorEstimadoProximoConcurso())
+            self.Estimado = FormataValor(str(self.ResultLotoFacil.valorEstimadoProximoConcurso()))
             self.label = ctk.CTkLabel(self,
                                       text="",
                                       fg_color="transparent",
@@ -135,6 +144,12 @@ class Frame_Sortear(ctk.CTkFrame):
                                    textvariable=self.NoConcurso
                                    ).place(relx=self.x_value, rely=0.79)
 
+        self.label5 = ctk.CTkLabel(self,
+                                   text=self.Estimado,
+                                   font = ('Arial', 18),
+                                   text_color='orange',
+                                   ).place(relx=self.x_value - 0.3, rely=0.61)
+
 
     # ########## Combo Número Jogos selecionado
     def select_callback(self, choice):
@@ -160,10 +175,13 @@ class Frame_Sortear(ctk.CTkFrame):
         self.Tipo = jogo
         if self.Tipo == 1:
             self.Atual = str(self.ResultLotoFacil.numero())
+            self.Estimado = FormataValor(str(self.ResultLotoFacil.valorEstimadoProximoConcurso()))
         elif self.Tipo == 2:
             self.Atual = str(self.ResultMegasena.numero())
+            self.Estimado = FormataValor(str(self.ResultMegasena.valorEstimadoProximoConcurso()))
         else:
             self.Atual = str(self.ResultDiadeSorte.numero())
+            self.Estimado = FormataValor(str(self.ResultDiadeSorte.valorEstimadoProximoConcurso()))
 
         self.NoConcurso.set(self.Atual)
         self.chave = str(self.Tipo) + '_' + str(self.QtdNumeros)  # Valor da Aposta
@@ -183,6 +201,11 @@ class Frame_Sortear(ctk.CTkFrame):
         self.label4 = ctk.CTkLabel(self,
                                    text=self.Prob
                                    ).place(relx=self.x_value + 0.27, rely=0.51)
+        self.label5 = ctk.CTkLabel(self,
+                                   text=self.Estimado,
+                                   font=('Arial', 18),
+                                   text_color='orange',
+                                   ).place(relx=self.x_value - 0.3, rely=0.61)
 
     def BuscaResultado(self):
         #self.Resultado = {}
@@ -210,26 +233,29 @@ class Frame_Sortear(ctk.CTkFrame):
     ### Cria tela para mostrar os números sorteados
     def open_toplevelResultado(self):
         try:
+
             self.ResultadoTotal = self.BuscaResultado()
+
 
             self.toplevel_window2 = None
             if self.toplevel_window2 is None or not self.toplevel_window2.winfo_exists():
                 self.toplevel_window2 = ToplevelWindowResultado(self.ResultadoTotal)  # create window if its None or destroyed
                 self.toplevel_window2.focus()  # if window exists focus it
             else:
-                self.toplevel_window.focus()  # if window exists focus it
+                self.toplevel_window2.focus()  # if window exists focus it
 
-            self.label = ctk.CTkLabel(self,
-                                      text="",
-                                      fg_color="transparent",
-                                      font=('Arial', 30),
-                                      ).place(relx=0.23, rely=0.90)
+            # self.label = ctk.CTkLabel(self,
+            #                           text="",
+            #                           fg_color="transparent",
+            #                           font=('Arial', 30),
+            #                           ).place(relx=0.23, rely=0.90)
         except:
             self.label = ctk.CTkLabel(self,
                                       text="  ACESSO INVÁLIDO ! ",
                                       fg_color="orange",
                                       font=('Arial', 30),
                                       ).place(relx=0.23, rely=0.90)
+
 
 
 ### Tela de Apresentação
